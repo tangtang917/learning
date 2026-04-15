@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: boot-integration-demo
+  datasource:
+    url: jdbc:mysql://localhost:3306/learning_demo?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 1
+  quartz:
+    job-store-type: memory
+
+mybatis:
+  mapper-locations: classpath*:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+server:
+  port: 8086
+
+app:
+  pulsar:
+    service-url: pulsar://localhost:6650
+    topic: persistent://public/default/integration-topic
+    subscription: integration-subscription
+

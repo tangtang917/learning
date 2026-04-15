@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: boot-async-task
+
+server:
+  port: 8083
+
+app:
+  async:
+    core-pool-size: 4
+    max-pool-size: 8
+    queue-capacity: 100
+

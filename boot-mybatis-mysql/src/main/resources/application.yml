@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: boot-mybatis-mysql
+  datasource:
+    url: jdbc:mysql://localhost:3306/learning_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+  sql:
+    init:
+      mode: never
+
+mybatis:
+  mapper-locations: classpath*:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+server:
+  port: 8081
+

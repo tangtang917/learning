@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: boot-redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+
+server:
+  port: 8082
+

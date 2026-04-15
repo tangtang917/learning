@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: boot-quartz-scheduler
+  datasource:
+    url: jdbc:mysql://localhost:3306/quartz_learning?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: learningScheduler
+            instanceId: AUTO
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            isClustered: true
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            tablePrefix: QRTZ_
+          threadPool:
+            threadCount: 10
+
+server:
+  port: 8085
+

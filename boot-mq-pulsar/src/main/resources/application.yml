@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: boot-mq-pulsar
+
+server:
+  port: 8084
+
+app:
+  pulsar:
+    service-url: pulsar://localhost:6650
+    topic: persistent://public/default/learning-topic
+    subscription: learning-subscription
+
