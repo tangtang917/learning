@@ -11,6 +11,12 @@
 - 启动脚本
 - 日志排查
 
+## 目录结构说明
+- `docker`：Docker 相关材料目录，比如 `Dockerfile`、镜像构建说明。
+- `scripts`：脚本目录，比如启动脚本、打包脚本、辅助脚本。
+- `linux`：Linux 命令和部署笔记目录。
+- `docs`：工程化和排障相关文档目录。
+
 ## 学习资源
 - [内部资源清单](../docs/resources/ops.md)
 - [Docker 从入门到实践](https://docker-practice.github.io/zh-cn/)
@@ -28,4 +34,3 @@
 
 ## 完成状态
 - 状态：未开始
-

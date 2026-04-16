@@ -11,6 +11,17 @@
 - `JobStoreTX`
 - 集群配置
 
+## 包结构说明
+- `controller`：调度管理接口层，比如新增任务、暂停任务、恢复任务。
+- `service`：调度业务能力定义层。
+- `service.impl`：调度业务实现层。
+- `job`：Quartz 作业包，放真正执行的任务类。
+- `trigger`：触发器相关包，放触发器组装和触发策略逻辑。
+- `config`：Quartz 配置包，放调度器、JobStore、线程池配置。
+- `model`：任务模型对象，比如任务参数和任务定义对象。
+- `validator`：Cron 表达式和任务入参校验。
+- `util`：调度工具方法。
+
 ## 学习资源
 - [内部资源清单](../docs/resources/quartz.md)
 - [Baeldung 中文：Spring 中使用 Quartz 实现任务调度](https://www.baeldung-cn.com/spring-quartz-schedule)
@@ -28,4 +39,3 @@
 
 ## 完成状态
 - 状态：未开始
-

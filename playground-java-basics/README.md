@@ -14,6 +14,17 @@
 - `lambda`
 - `stream`
 
+## 包结构说明
+- `oop`：面向对象练习包，放封装、继承、多态、接口和抽象类示例。
+- `collection`：集合练习包，放 `List`、`Set`、`Map` 以及遍历、排序实验。
+- `generic`：泛型练习包，放泛型类、泛型方法、通配符示例。
+- `exception`：异常练习包，放异常分类、自定义异常和异常处理流程示例。
+- `reflection`：反射练习包，放获取类信息、调用方法、操作字段等实验。
+- `io`：传统 IO 练习包，放字节流、字符流、文件读写内容。
+- `nio`：NIO 练习包，放 `Buffer`、`Channel`、`Path` 等实验。
+- `lambda`：Lambda 表达式练习包，放函数式接口和简化写法示例。
+- `stream`：Stream 流式处理练习包，放过滤、映射、聚合、分组操作。
+
 ## 学习资源
 - [内部资源清单](../docs/resources/java-basics.md)
 - [廖雪峰 Java 教程](https://liaoxuefeng.com/books/java/introduction/)
@@ -31,4 +42,3 @@
 
 ## 完成状态
 - 状态：未开始
-

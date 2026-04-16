@@ -12,6 +12,16 @@
 - 递归与回溯
 - 排序与查找
 
+## 包结构说明
+- `array`：数组题练习包。
+- `linkedlist`：链表题练习包。
+- `stackqueue`：栈和队列题练习包。
+- `hashmap`：哈希表题练习包。
+- `tree`：树结构题练习包，适合放二叉树遍历、层序遍历等内容。
+- `recursion`：递归与回溯练习包。
+- `sort`：排序算法练习包。
+- `search`：查找算法练习包。
+
 ## 学习资源
 - [内部资源清单](../docs/resources/algorithm.md)
 - [代码随想录](https://www.programmercarl.com/)
@@ -28,4 +38,3 @@
 
 ## 完成状态
 - 状态：未开始
-

@@ -10,6 +10,15 @@
 - 分布式锁
 - 热点数据处理
 
+## 包结构说明
+- `controller`：缓存相关接口入口。
+- `service`：缓存业务接口层。
+- `service.impl`：缓存业务实现层。
+- `cache`：缓存操作包，放缓存读写和缓存策略逻辑。
+- `lock`：分布式锁包，放锁实现和锁实验。
+- `config`：Redis 配置、序列化配置等。
+- `util`：Redis 模块辅助工具。
+
 ## 学习资源
 - [内部资源清单](../docs/resources/redis.md)
 - [图解 Redis](https://www.xiaolincoding.com/redis/)
@@ -27,4 +36,3 @@
 
 ## 完成状态
 - 状态：未开始
-

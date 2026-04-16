@@ -11,6 +11,19 @@
 - SQL 基础优化
 - 批量操作入门
 
+## 包结构说明
+- `controller`：数据库练习模块的接口层。
+- `service`：数据库业务接口层。
+- `service.impl`：数据库业务实现层。
+- `mapper`：MyBatis 数据访问接口层。
+- `entity`：数据库实体对象，通常和表结构接近。
+- `dto`：请求对象。
+- `vo`：返回对象。
+- `config`：数据源、MyBatis、事务配置。
+- `exception`：数据库模块自己的异常定义和处理。
+- `resources/mapper`：MyBatis XML 映射文件目录。
+- `resources/sql`：建表、初始化、实验 SQL 脚本目录。
+
 ## 学习资源
 - [内部资源清单](../docs/resources/mysql-mybatis.md)
 - [图解 MySQL](https://xiaolincoding.com/mysql/)
@@ -28,4 +41,3 @@
 
 ## 完成状态
 - 状态：未开始
-

@@ -50,6 +50,7 @@
 - [总览](docs/roadmap/01-overview.md)
 - [阶段计划](docs/roadmap/02-phase-plan.md)
 - [学习检查清单](docs/roadmap/03-checklist.md)
+- [包结构中文说明](docs/roadmap/04-package-glossary.md)
 - [资源目录](docs/resources)
 - [设计说明](docs/superpowers/specs/2026-04-15-learning-backend-workspace-design.md)
 - [实施计划](docs/superpowers/plans/2026-04-15-learning-backend-workspace-bootstrap.md)
@@ -59,4 +60,3 @@
 - 每个模块都保留自己的 `README.md`，作为学习入口与笔记入口。
 - 综合模块只做串联，不做大而全业务系统。
 - 如果后续要贴近公司旧项目，可以单独开 `java8-boot2` 分支，不污染当前主仓库结构。
-
