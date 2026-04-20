@@ -420,7 +420,9 @@ Java使用Unicode编码表示`String`和`char`；
 
 
 
-##### 1.1.13 StringBUilder
+#### 2.1 java核心类
+
+##### 2.1.1 StringBUilder
 
 `StringBuilder`是可变对象，用来高效拼接字符串；
 
@@ -430,7 +432,7 @@ Java使用Unicode编码表示`String`和`char`；
 
 
 
-##### 1.1.14 包装类型
+##### 2.1.2 包装类型
 
 Java的数据类型分两种：
 
@@ -466,7 +468,7 @@ Java核心库提供的包装类型可以把基本类型包装为`class`；
 
 
 
-##### 1.1.15 枚举
+##### 2.1.3 枚举
 
 Java使用`enum`定义枚举类型，它被编译器编译为`final class Xxx extends Enum { … }`；
 
@@ -527,7 +529,7 @@ enum Color {
 
 
 
-##### 1.1.16 BigInteger
+##### 2.1.4 BigInteger
 
 `BigInteger`用于表示任意大小的整数；
 
@@ -557,7 +559,7 @@ public class biginteger_11 {
 
 
 
-##### 1.1.17 BigDecimal
+##### 2.1.5 BigDecimal
 
 `BigDecimal`用于表示精确的小数，常用于财务计算；
 
@@ -611,9 +613,69 @@ public class bigdecimal_12 {
 
 
 
-##### 1.1.18 常用工具类
+##### 2.1.6 常用工具类
 
 - Math：数学计算
 - HexFormat：格式化十六进制数
 - Random：生成伪随机数
 - SecureRandom：生成安全的随机数
+
+
+
+### 第二章节、集合
+
+#### 2.1 List
+
+我们考察`List<E>`接口，可以看到几个主要的接口方法：
+
+- 在末尾添加一个元素：`boolean add(E e)`
+- 在指定索引添加一个元素：`boolean add(int index, E e)`
+- 删除指定索引的元素：`E remove(int index)`
+- 删除某个元素：`boolean remove(Object e)`
+- 获取指定索引的元素：`E get(int index)`
+- 获取链表大小（包含元素的个数）：`int size()`
+
+
+
+实现`List`接口并非只能通过数组（即`ArrayList`的实现方式）来实现，另一种`LinkedList`通过“链表”也实现了List接口。在`LinkedList`中，它的内部每个元素都指向下一个元素：
+
+
+
+我们来比较一下`ArrayList`和`LinkedList`：
+
+|                     | ArrayList    | LinkedList           |
+| ------------------- | ------------ | -------------------- |
+| 获取指定元素        | 速度很快     | 需要从头开始查找元素 |
+| 添加元素到末尾      | 速度很快     | 速度很快             |
+| 在指定位置添加/删除 | 需要移动元素 | 不需要移动元素       |
+| 内存占用            | 少           | 较大                 |
+
+通常情况下，我们总是优先使用`ArrayList`。
+
+
+
+```java
+ public static void main(String[] args) {
+
+        /*
+        使用iterator进行遍历
+         */
+        List<String> list = List.of("1", "2", "3", "4", "5", "6", "7", "8", "9"); // 创建list可以使用List.of方法，但这种方法不接受null值
+        Iterator<String> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            System.out.println(iterator.next());
+        }
+
+        /*
+        List和Array转换
+         */
+        List<Integer> list1 = List.of(12, 34, 56);
+//        Object[] array = list1.toArray(); // 不推荐，此类转换会丢失类型信息
+        Integer[] array = list1.toArray(new Integer[3]); // 推荐转换写法
+    }
+```
+
+
+
+#### 2.2 Map
+
