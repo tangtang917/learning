@@ -219,3 +219,401 @@ Java的方法调用总是作用于运行期对象的实际类型，这种行为�
 - `final`修饰的方法可以阻止被覆写；
 - `final`修饰的class可以阻止被继承；
 - `final`修饰的field必须在创建对象时初始化，随后不可修改。
+
+
+
+##### 1.1.6 抽象类
+
+无法实例化的抽象类有什么用？
+
+因为抽象类本身被设计成只能用于被继承，因此，抽象类可以强迫子类实现其定义的抽象方法，否则编译会报错。因此，抽象方法实际上相当于定义了**“规范”**。这就是面向抽象编程。
+
+面向抽象编程的本质就是：
+
+- 上层代码只定义规范（例如：`abstract class Person`）；
+- 不需要子类就可以实现业务逻辑（正常编译）；
+- 具体的业务逻辑由不同的子类实现，**调用者并不关心**。
+
+
+
+##### 1.1.7 接口
+
+Java的接口（interface）定义了纯抽象规范，一个类可以实现多个接口；
+
+接口也是数据类型，适用于向上转型和向下转型；
+
+接口的所有方法都是抽象方法，接口不能定义实例字段；
+
+接口可以定义`default`方法（JDK>=1.8)
+
+
+
+在抽象类中，抽象方法本质上是定义接口规范：即规定高层类的接口，从而保证所有子类都有相同的接口实现，这样，多态就能发挥出威力。
+
+如果一个抽象类没有字段，所有方法全部都是抽象方法：就可以把该抽象类改写为接口：`interface`
+
+所谓`interface`，就是比抽象类还要抽象的纯抽象接口，因为它连字段都不能有。因为接口定义的所有方法默认都是`public abstract`的。
+
+实现类可以不必覆写`default`方法。`default`方法的目的是，当我们需要给接口新增一个方法时，会涉及到修改全部子类。如果新增的是`default`方法，那么子类就不必全部修改，只需要在需要覆写的地方去覆写新增方法。
+
+
+
+##### 1.1.8 静态字段和静态方法
+
+静态字段属于所有实例“共享”的字段，实际上是属于`class`的字段；
+
+调用静态方法不需要实例，无法访问`this`，但可以访问静态字段和其他静态方法；
+
+静态方法常用于工具类和辅助方法。
+
+**接口的静态字段**
+
+因为`interface`是一个纯抽象类，所以它不能定义实例字段。但是，`interface`是可以有静态字段的，并且静态字段必须为`final`类型：
+
+```java
+public interface Person {
+    public static final int MALE = 1;
+    public static final int FEMALE = 2;
+}
+```
+
+实际上，因为`interface`的字段只能是`public static final`类型，所以我们可以把这些修饰符都去掉，上述代码可以简写为：
+
+```java
+public interface Person {
+    // 编译器会自动加上public static final:
+    int MALE = 1;
+    int FEMALE = 2;
+}
+```
+
+
+
+##### 1.1.9 包
+
+Java内建的`package`机制是为了避免`class`命名冲突；
+
+JDK的核心类使用`java.lang`包，编译器会自动导入；
+
+JDK的其它常用类定义在`java.util.*`，`java.math.*`，`java.text.*`，……；
+
+包名推荐使用倒置的域名，例如`org.apache`。
+
+
+
+##### 1.1.10 作用域
+
+Java内建的访问权限包括`public`、`protected`、`private`和`package`权限；
+
+Java在方法内部定义的变量是局部变量，局部变量的作用域从变量声明开始，到一个块结束；
+
+`final`修饰符不是访问权限，它可以修饰`class`、`field`和`method`；
+
+一个`.java`文件只能包含一个`public`类，但可以包含多个非`public`类。
+
+
+
+**最佳实践**
+
+如果不确定是否需要`public`，就不声明为`public`，即尽可能少地暴露对外的字段和方法。
+
+把方法定义为`package`权限有助于测试，因为测试类和被测试类只要位于同一个`package`，测试代码就可以访问被测试类的`package`权限方法。
+
+一个`.java`文件只能包含一个`public`类，但可以包含多个非`public`类。如果有`public`类，文件名必须和`public`类的名字相同。
+
+**final**
+
+用`final`修饰`class`可以阻止被继承；
+
+用`final`修饰`method`可以阻止被子类覆写；
+
+用`final`修饰`field`可以阻止被重新赋值；
+
+
+
+##### 1.1.11 内部类
+
+还有一种类，它被定义在另一个类的内部，所以称为内部类（Nested Class）
+
+示例代码：
+
+```java
+// inner class
+public class Main {
+    public static void main(String[] args) {
+        Outer outer = new Outer("Nested"); // 实例化一个Outer
+        Outer.Inner inner = outer.new Inner(); // 实例化一个Inner
+        inner.hello();
+    }
+}
+
+class Outer {
+    private String name;
+
+    Outer(String name) {
+        this.name = name;
+    }
+
+    class Inner {
+        void hello() {
+            System.out.println("Hello, " + Outer.this.name);
+        }
+    }
+}
+
+```
+
+还有一种定义Inner Class的方法，它不需要在Outer Class中明确地定义这个Class，而是在方法内部，通过**匿名类**（Anonymous Class）来定义。
+
+```java
+// Anonymous Class
+public class Main {
+    public static void main(String[] args) {
+        Outer outer = new Outer("Nested");
+        outer.asyncHello();
+    }
+}
+
+class Outer {
+    private String name;
+
+    Outer(String name) {
+        this.name = name;
+    }
+
+    void asyncHello() {
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("Hello, " + Outer.this.name);
+            }
+        };
+        new Thread(r).start();
+    }
+}
+
+```
+
+观察`asyncHello()`方法，我们在方法内部实例化了一个`Runnable`。`Runnable`本身是接口，接口是不能实例化的，所以这里实际上是定义了一个实现了`Runnable`接口的匿名类，并且通过`new`实例化该匿名类，然后转型为`Runnable`。在定义匿名类的时候就必须实例化它，定义匿名类的写法如下：
+
+```java
+Runnable r = new Runnable() {
+    // 实现必要的抽象方法...
+};
+```
+
+
+
+##### 1.1.12 字符串和编码
+
+Java字符串`String`是**不可变对象**；
+
+字符串操作不改变原字符串内容，而是返回新字符串；
+
+常用的字符串操作：提取子串、查找、替换、大小写转换等；
+
+Java使用Unicode编码表示`String`和`char`；
+
+转换编码就是将`String`和`byte[]`转换，需要指定编码；
+
+转换为`byte[]`时，始终优先考虑`UTF-8`编码。
+
+
+
+##### 1.1.13 StringBUilder
+
+`StringBuilder`是可变对象，用来高效拼接字符串；
+
+`StringBuilder`可以支持链式操作，实现链式操作的关键是返回实例本身；
+
+`StringBuffer`是`StringBuilder`的线程安全版本，现在很少使用。
+
+
+
+##### 1.1.14 包装类型
+
+Java的数据类型分两种：
+
+- 基本类型：`byte`，`short`，`int`，`long`，`boolean`，`float`，`double`，`char`；
+- 引用类型：所有`class`和`interface`类型。
+
+引用类型可以赋值为`null`，表示空，但基本类型不能赋值为`null`：
+
+
+
+Java核心库提供的包装类型可以把基本类型包装为`class`；
+
+自动装箱和自动拆箱都是在编译期完成的（JDK>=1.5）；
+
+装箱和拆箱会影响执行效率，且拆箱时可能发生`NullPointerException`；
+
+包装类型的比较必须使用`equals()`；
+
+整数和浮点数的包装类型都继承自`Number`；
+
+包装类型提供了大量实用方法；
+
+所有的包装类型都是不变类。
+
+**最佳实践**
+
+因为`Integer.valueOf()`可能始终返回同一个`Integer`实例，因此，在我们自己创建`Integer`的时候，以下两种方法：
+
+- 方法1：`Integer n = new Integer(100);`
+- 方法2：`Integer n = Integer.valueOf(100);`
+
+方法2更好，因为方法1总是创建新的`Integer`实例
+
+
+
+##### 1.1.15 枚举
+
+Java使用`enum`定义枚举类型，它被编译器编译为`final class Xxx extends Enum { … }`；
+
+通过`name()`获取常量定义的字符串，注意不要使用`toString()`；
+
+通过`ordinal()`返回常量定义的顺序（无实质意义）；
+
+可以为`enum`编写构造方法、字段和方法
+
+`enum`的构造方法要声明为`private`，字段强烈建议声明为`final`；
+
+`enum`适合用在`switch`语句中。
+
+
+
+```java
+public class meiju_10 {
+    public static void main(String[] args) {
+        /*Weekday day = Weekday.SUN;
+        if (day == Weekday.SAT || day == Weekday.SUN) {
+            System.out.println("Work at home!");
+        } else {
+            System.out.println("Work at office!");
+        }*/
+
+        /*int day = 1;
+        if (day == Weekday.SUN) { // Operator '==' cannot be applied to 'int', 'com.learning.basics.oop
+        }*/
+
+        /*Weekday x = Weekday.SUN; // ok!
+        Weekday y = Color.RED; // Compile error: incompatible types*/
+
+        /*
+        使用enum定义的枚举类是一种引用类型。
+        引用类型比较，要使用equals()方法，如果使用==比较，它比较的是两个引用类型的变量是否是同一个对象。
+        但enum类型可以例外。
+        这是因为enum类型的每个常量在JVM中只有一个唯一实例，所以可以直接用==比较。
+         */
+        /*Weekday day = Weekday.MON;
+        if (day == Weekday.FRI) { // ok!
+        }
+        if (day.equals(Weekday.SUN)) { // ok, but more code!
+        }*/
+
+        System.out.println(Weekday.MON.name()); // MON
+        System.out.println(Weekday.THU.ordinal()); // 4
+    }
+}
+
+enum Weekday {
+    SUN, MON, TUE, WED, THU, FRI, SAT;
+}
+
+enum Color {
+    RED, GREEN, BLUE;
+}
+```
+
+
+
+##### 1.1.16 BigInteger
+
+`BigInteger`用于表示任意大小的整数；
+
+`BigInteger`是不变类，并且继承自`Number`；
+
+将`BigInteger`转换成基本类型时可使用`longValueExact()`等方法保证结果准确。
+
+```java
+public class biginteger_11 {
+    public static void main(String[] args) {
+
+        // 定义
+        BigInteger bi = new BigInteger("12345567890");
+
+        // 乘法
+        System.out.println(bi.pow(5));
+
+        // 加法
+        System.out.println(bi.add(new BigInteger("12345678901234567890")));
+
+        BigInteger i = new BigInteger("123456789000");
+        System.out.println(i.longValue()); // 123456789000
+        System.out.println(i.multiply(i).longValueExact()); // Exception in thread "main" java.lang.ArithmeticException: BigInteger out of long range
+    }
+}
+```
+
+
+
+##### 1.1.17 BigDecimal
+
+`BigDecimal`用于表示精确的小数，常用于财务计算；
+
+比较`BigDecimal`的值是否相等，必须使用`compareTo()`而不能使用`equals()`。
+
+```java
+public class bigdecimal_12 {
+
+    public static void main(String[] args) {
+        // BigDecimal用scale()表示小数位数
+        BigDecimal d1 = new BigDecimal("123.45");
+        BigDecimal d2 = new BigDecimal("123.4500");
+        BigDecimal d3 = new BigDecimal("1234500");
+        System.out.println(d1.scale()); // 2,两位小数
+        System.out.println(d2.scale()); // 4
+        System.out.println(d3.scale()); // 0
+        System.out.println("==============================");
+
+        // 通过BigDecimal的stripTrailingZeros()方法，可以将一个BigDecimal格式化为一个相等的，但去掉了末尾0的BigDecimal：
+        BigDecimal d4 = new BigDecimal("123.4500");
+        BigDecimal d5 = d4.stripTrailingZeros();
+        System.out.println(d4.scale()); // 4
+        System.out.println(d5.scale()); // 2,因为去掉了00
+
+        BigDecimal d6 = new BigDecimal("1234500");
+        BigDecimal d7 = d6.stripTrailingZeros();
+        System.out.println(d6.scale()); // 0
+        System.out.println(d7.scale()); // -2
+        System.out.println("==============================");
+
+        BigDecimal d8 = new BigDecimal("123.456789");
+        BigDecimal d9 = d8.setScale(4, RoundingMode.HALF_UP); // 四舍五入，123.4568
+        BigDecimal d10 = d8.setScale(4, RoundingMode.DOWN); // 直接截断，123.4567
+        System.out.println(d9); // 123.4568
+        System.out.println(d10); // 123.4567
+        System.out.println("==============================");
+
+        // 对BigDecimal做加、减、乘时，精度不会丢失，但是做除法时，存在无法除尽的情况，这时，就必须指定精度以及如何进行截断：
+        BigDecimal d11 = new BigDecimal("123.456");
+        BigDecimal d12 = new BigDecimal("23.456789");
+        BigDecimal d13 = d11.divide(d12, 10, RoundingMode.HALF_UP); // 保留10位小数并四舍五入
+        System.out.println(d13);
+        BigDecimal d14 = d11.divide(d12); // 报错：ArithmeticException，因为除不尽
+
+        // 在比较两个BigDecimal的值是否相等时，要特别注意，使用equals()方法不但要求两个BigDecimal的值相等，还要求它们的scale()相等：
+        // 总是使用compareTo()比较两个BigDecimal的值，不要使用equals()！
+    }
+}
+
+```
+
+
+
+##### 1.1.18 常用工具类
+
+- Math：数学计算
+- HexFormat：格式化十六进制数
+- Random：生成伪随机数
+- SecureRandom：生成安全的随机数
