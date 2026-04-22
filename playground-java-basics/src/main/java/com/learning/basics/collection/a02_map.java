@@ -2,7 +2,7 @@ package com.learning.basics.collection;
 
 import java.util.*;
 
-public class a01_map {
+public class a02_map {
     public static void main(String[] args) {
         List<Student> list = List.of(
             new Student("Bob", 78),

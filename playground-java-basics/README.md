@@ -679,3 +679,352 @@ public class bigdecimal_12 {
 
 #### 2.2 Map
 
+`Map`是一种映射表，可以通过`key`快速查找`value`；
+
+可以通过`for each`遍历`keySet()`，也可以通过`for each`遍历`entrySet()`，直接获取`key-value`；
+
+最常用的一种`Map`实现是`HashMap`
+
+
+
+#### 2.3  equals和hashcode
+
+equals正确覆写，使用Objects的静态方法
+
+```java
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof Person p) {
+            return Objects.equals(this.firstName, p.firstName) && Objects.equals(this.lastName, p.lastName) && this.age == p.age;
+        }
+        return false;
+    }
+```
+
+
+
+hashcode的覆写方式
+
+```java
+public class Person {
+    String firstName;
+    String lastName;
+    int age;
+
+    @Override
+    int hashCode() {
+        int h = 0;
+        h = 31 * h + firstName.hashCode();
+        h = 31 * h + lastName.hashCode();
+        h = 31 * h + age;
+        return h;
+    }
+}
+```
+
+
+
+要正确使用`HashMap`，作为`key`的类必须正确覆写`equals()`和`hashCode()`方法；
+
+一个类如果覆写了`equals()`，就必须覆写`hashCode()`，并且覆写规则是：
+
+- 如果`equals()`返回`true`，则`hashCode()`返回值必须相等；
+- 如果`equals()`返回`false`，则`hashCode()`返回值尽量不要相等。
+
+实现`hashCode()`方法可以通过`Objects.hashCode()`辅助方法实现。
+
+
+
+#### 2.4 TreeMap
+
+`SortedMap`在遍历时严格按照Key的顺序遍历，最常用的实现类是`TreeMap`；
+
+作为`SortedMap`的Key必须实现`Comparable`接口，或者传入`Comparator`；
+
+要严格按照`compare()`规范实现比较逻辑，否则，`TreeMap`将不能正常工作。
+
+
+
+```java
+public class a03_treemap {
+    public static void main(String[] args) {
+        Map<Person, Integer> map = new TreeMap<>(new Comparator<Person>() {
+            @Override
+            public int compare(Person o1, Person o2) {
+                return o1.name.compareTo(o2.name);
+            }
+        });
+
+        map.put(new Person("Tom"), 1);
+        map.put(new Person("Jerry"), 2);
+        map.put(new Person("Lily"), 3);
+        for (Person key : map.keySet()) {
+            System.out.println(key);
+        }
+
+        System.out.println(map.get(new Person("Lily")));
+    }
+}
+
+class Person {
+    public String name;
+
+    public Person (String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "{Person: " + name + "}";
+    }
+}
+```
+
+注意到`Comparator`接口要求实现一个比较方法，它负责比较传入的两个元素`a`和`b`，如果`a<b`，则返回负数，通常是`-1`，如果`a==b`，则返回`0`，如果`a>b`，则返回正数，通常是`1`。`TreeMap`内部根据比较结果对Key进行排序。
+
+从上述代码执行结果可知，打印的Key确实是按照`Comparator`定义的顺序排序的。如果要根据Key查找Value，我们可以传入一个`new Person("Bob")`作为Key，它会返回对应的`Integer`值`2`。
+
+另外，注意到`Person`类并未覆写`equals()`和`hashCode()`，因为`TreeMap`不使用`equals()`和`hashCode()`。
+
+
+
+我们来看一个稍微复杂的例子：这次我们定义了`Student`类，并用分数`score`进行排序，高分在前：
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        Map<Student1, Integer> map = new TreeMap<>(new Comparator<Student1>() {
+            public int compare(Student1 p1, Student1 p2) {
+                if (p1.score == p2.score) {
+        			return 0;
+    			}
+                return p1.score > p2.score ? -1 : 1;
+            }
+        });
+        map.put(new Student1("Tom", 77), 1);
+        map.put(new Student1("Bob", 66), 2);
+        map.put(new Student1("Lily", 99), 3);
+        for (Student1 key : map.keySet()) {
+            System.out.println(key);
+        }
+        System.out.println(map.get(new Student1("Bob", 66))); // null?
+    }
+}
+
+class Student1 {
+    public String name;
+    public int score;
+    Student1(String name, int score) {
+        this.name = name;
+        this.score = score;
+    }
+    public String toString() {
+        return String.format("{%s: score=%d}", name, score);
+    }
+}
+```
+
+返回值有三种情况:0,正,负       
+
+返回值为正: 前者(也就是o1)权重大,o1向后排      
+
+ 返回值为负: 后者(也就是o2)权重大,o2向后排       
+
+返回值为0: 权重相等,不交换
+
+
+
+#### 2.5 Set
+
+`Set`用于存储不重复的元素集合，它主要提供以下几个方法：
+
+- 将元素添加进`Set<E>`：`boolean add(E e)`
+- 将元素从`Set<E>`删除：`boolean remove(Object e)`
+- 判断是否包含元素：`boolean contains(Object e)`
+
+
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        List<Message> received = List.of(
+            new Message(1, "Hello!"),
+            new Message(2, "发工资了吗？"),
+            new Message(2, "发工资了吗？"),
+            new Message(3, "去哪吃饭？"),
+            new Message(3, "去哪吃饭？"),
+            new Message(4, "Bye")
+        );
+        List<Message> displayMessages = process(received);
+        for (Message message : displayMessages) {
+            System.out.println(message.text);
+        }
+    }
+
+    static List<Message> process(List<Message> received) {
+        // TODO: 按sequence去除重复消息
+        Set<Message> processed = new HashSet<>(received);
+        List<Message> displayMessages = new ArrayList<>();
+        for (Message message : processed) {
+                displayMessages.add(message);
+        }
+        return displayMessages;
+    }
+}
+
+class Message {
+    public final int sequence;
+    public final String text;
+    public Message(int sequence, String text) {
+        this.sequence = sequence;
+        this.text = text;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.sequence;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Message that) {
+            return this.sequence == that.sequence;
+        }
+        return false;
+    }
+}
+```
+
+
+
+#### 2.6 Queue
+
+队列`Queue`实现了一个先进先出（FIFO）的数据结构：
+
+- 通过`add()`/`offer()`方法将元素添加到队尾；
+- 通过`remove()`/`poll()`从队首获取元素并删除；
+- 通过`element()`/`peek()`从队首获取元素但不删除。
+
+要避免把`null`添加到队列。
+
+```java
+// 这是一个List:
+List<String> list = new LinkedList<>();
+// 这是一个Queue:
+Queue<String> queue = new LinkedList<>();
+
+```
+
+
+
+#### 2.7 PriorityQueue
+
+`PriorityQueue`实现了一个优先队列：从队首获取元素时，总是获取优先级最高的元素；
+
+`PriorityQueue`默认按元素比较的顺序排序（必须实现`Comparable`接口），也可以通过`Comparator`自定义排序算法（元素就不必实现`Comparable`接口）
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        Queue<User> q = new PriorityQueue<>(new UserComparator());
+        // 添加3个元素到队列:
+        q.offer(new User("Bob", "A1"));
+        q.offer(new User("Alice", "A2"));
+        q.offer(new User("Boss", "V1"));
+        System.out.println(q.poll()); // Boss/V1
+        System.out.println(q.poll()); // Bob/A1
+        System.out.println(q.poll()); // Alice/A2
+        System.out.println(q.poll()); // null,因为队列为空
+    }
+}
+
+class UserComparator implements Comparator<User> {
+    public int compare(User u1, User u2) {
+        if (u1.number.charAt(0) == u2.number.charAt(0)) {
+            // 如果两人的号都是A开头或者都是V开头,比较号的大小:
+            return u1.number.compareTo(u2.number);
+        }
+        if (u1.number.charAt(0) == 'V') {
+            // u1的号码是V开头,优先级高:
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+}
+
+class User {
+    public final String name;
+    public final String number;
+
+    public User(String name, String number) {
+        this.name = name;
+        this.number = number;
+    }
+
+    public String toString() {
+        return name + "/" + number;
+    }
+}
+```
+
+
+
+#### 2.8 Deque
+
+`Deque`实现了一个双端队列（Double Ended Queue），它可以：
+
+- 将元素添加到队尾或队首：`addLast()`/`offerLast()`/`addFirst()`/`offerFirst()`；
+- 从队首／队尾获取元素并删除：`removeFirst()`/`pollFirst()`/`removeLast()`/`pollLast()`；
+- 从队首／队尾获取元素但不删除：`getFirst()`/`peekFirst()`/`getLast()`/`peekLast()`；
+- 总是调用`xxxFirst()`/`xxxLast()`以便与`Queue`的方法区分开；
+- 避免把`null`添加到队列。
+
+```java
+// 不推荐的写法:
+LinkedList<String> d1 = new LinkedList<>();
+d1.offerLast("z");
+// 推荐的写法：
+Deque<String> d2 = new LinkedList<>();
+d2.offerLast("z");
+```
+
+
+
+#### 2.9 Stack
+
+栈（Stack）是一种后进先出（LIFO）的数据结构，操作栈的元素的方法有：
+
+- 把元素压栈：`push(E)`；
+- 把栈顶的元素“弹出”：`pop(E)`；
+- 取栈顶元素但不弹出：`peek(E)`。
+
+在Java中，我们用`Deque`可以实现`Stack`的功能，注意只调用`push()`/`pop()`/`peek()`方法，避免调用`Deque`的其他方法；
+
+不要使用遗留类`Stack`。
+
+
+
+#### 2.10 Iterator
+
+Java的集合类都可以使用`for each`循环
+
+```java
+for (Iterator<String> it = list.iterator(); it.hasNext(); ) {
+     String s = it.next();
+     System.out.println(s);
+}
+```
+
+while循环写法
+
+```java
+Iterator<String> it = list.iterator();
+while(it.hasNext()){
+    String s = it.next;
+    System.out.println(s);
+}
+```
+
+
+
