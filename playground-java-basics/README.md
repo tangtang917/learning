@@ -1474,6 +1474,22 @@ class Person {
 
 #### 5.3 调用方法
 
+Java的反射API提供的Method对象封装了方法的所有信息：
+
+通过`Class`实例的方法可以获取`Method`实例：`getMethod()`，`getMethods()`，`getDeclaredMethod()`，`getDeclaredMethods()`；
+
+通过`Method`实例可以获取方法信息：`getName()`，`getReturnType()`，`getParameterTypes()`，`getModifiers()`；
+
+通过`Method`实例可以调用某个对象的方法：`Object invoke(Object instance, Object... parameters)`；
+
+通过设置`setAccessible(true)`来访问非`public`方法；
+
+通过反射调用方法时，仍然遵循多态原则。
+
+
+
+
+
 `Class`类提供了以下几个方法来获取`Method`：
 
 - `Method getMethod(name, Class...)`：获取某个`public`的`Method`（包括父类）
@@ -1560,3 +1576,164 @@ public class Main {
 注意到`substring()`有两个重载方法，我们获取的是`String substring(int)`这个方法。思考一下如何获取`String substring(int, int)`方法。
 
 对`Method`实例调用`invoke`就相当于调用该方法，`invoke`的第一个参数是对象实例，即在哪个实例上调用该方法，后面的可变参数要与方法参数一致，否则将报错。
+
+
+
+**调用静态方法**
+
+如果获取到的Method表示一个静态方法，调用静态方法时，由于无需指定实例对象，所以`invoke`方法传入的第一个参数永远为`null`。我们以`Integer.parseInt(String)`为例：
+
+```java
+// reflection
+import java.lang.reflect.Method;
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+        // 获取Integer.parseInt(String)方法，参数为String:
+        Method m = Integer.class.getMethod("parseInt", String.class);
+        // 调用该静态方法并获取结果:
+        Integer n = (Integer) m.invoke(null, "12345");
+        // 打印调用结果:
+        System.out.println(n);
+    }
+}
+```
+
+
+
+**调用非public方法**
+
+和Field类似，对于非public方法，我们虽然可以通过`Class.getDeclaredMethod()`获取该方法实例，但直接对其调用将得到一个`IllegalAccessException`。为了调用非public方法，我们通过`Method.setAccessible(true)`允许其调用：
+
+```java
+// reflection
+import java.lang.reflect.Method;
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+        Person p = new Person();
+        Method m = p.getClass().getDeclaredMethod("setName", String.class);
+        m.setAccessible(true);
+        m.invoke(p, "Bob");
+        System.out.println(p.name);
+    }
+}
+
+class Person {
+    String name;
+    private void setName(String name) {
+        this.name = name;
+    }
+}
+```
+
+此外，`setAccessible(true)`可能会失败。如果JVM运行期存在`SecurityManager`，那么它会根据规则进行检查，有可能阻止`setAccessible(true)`。例如，某个`SecurityManager`可能不允许对`java`和`javax`开头的`package`的类调用`setAccessible(true)`，这样可以保证JVM核心库的安全。
+
+
+
+**多态**
+
+我们来考察这样一种情况：一个`Person`类定义了`hello()`方法，并且它的子类`Student`也覆写了`hello()`方法，那么，从`Person.class`获取的`Method`，作用于`Student`实例时，调用的方法到底是哪个？
+
+```java
+// reflection
+import java.lang.reflect.Method;
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+        // 获取Person的hello方法:
+        Method h = Person.class.getMethod("hello");
+        // 对Student实例调用hello方法:
+        h.invoke(new Student());
+    }
+}
+
+class Person {
+    public void hello() {
+        System.out.println("Person:hello");
+    }
+}
+
+class Student extends Person {
+    public void hello() {
+        System.out.println("Student:hello");
+    }
+}
+```
+
+运行上述代码，发现打印出的是`Student:hello`，因此，使用反射调用方法时，仍然遵循多态原则：即总是调用实际类型的覆写方法（如果存在）。上述的反射代码：
+
+```java
+Method m = Person.class.getMethod("hello");
+m.invoke(new Student());
+```
+
+实际上相当于：
+
+```java
+Person p = new Student();
+p.hello();
+```
+
+
+
+#### 5.4 调用构造方法
+
+通过Class实例获取Constructor的方法如下：
+
+- `getConstructor(Class...)`：获取某个`public`的`Constructor`；
+- `getDeclaredConstructor(Class...)`：获取某个`Constructor`；
+- `getConstructors()`：获取所有`public`的`Constructor`；
+- `getDeclaredConstructors()`：获取所有`Constructor`。
+
+注意`Constructor`总是当前类定义的构造方法，和父类无关，因此不存在多态的问题。
+
+调用非`public`的`Constructor`时，必须首先通过`setAccessible(true)`设置允许访问。`setAccessible(true)`可能会失败。
+
+
+
+### 第六章节 IO
+
+IO流是一种流式的数据输入/输出模型：
+
+- （字节流）二进制数据以`byte`为最小单位在`InputStream`/`OutputStream`中单向流动；
+- （字符流）字符数据以`char`为最小单位在`Reader`/`Writer`中单向流动。
+
+Java标准库的`java.io`包提供了同步IO功能：
+
+- 字节流接口：`InputStream`/`OutputStream`；
+- 字符流接口：`Reader`/`Writer`。
+
+
+
+#### 6.1File对象
+
+Java标准库的`java.io.File`对象表示一个文件或者目录：
+
+- 创建`File`对象本身不涉及IO操作；
+- 可以获取路径／绝对路径／规范路径：`getPath()`/`getAbsolutePath()`/`getCanonicalPath()`；
+- 可以获取目录的文件和子目录：`list()`/`listFiles()`；
+- 可以创建或删除文件和目录。当File对象表示一个文件时，可以通过`createNewFile()`创建一个新文件，用`delete()`删除该文件。
+
+用`File`对象获取到一个文件时，还可以进一步判断文件的权限和大小：
+
+- `boolean canRead()`：是否可读；
+- `boolean canWrite()`：是否可写；
+- `boolean canExecute()`：是否可执行；
+- `long length()`：文件字节大小。
+
+对目录而言，是否可执行表示能否列出它包含的文件和子目录。
+
+
+
+#### 6.2 InputStream
+
+Java标准库的`java.io.InputStream`定义了所有输入流的超类：
+
+- `FileInputStream`实现了文件流输入；
+- `ByteArrayInputStream`在内存中模拟一个字节流输入。
+
+总是使用`try(resource)`来保证`InputStream`正确关闭。
+
+
+
