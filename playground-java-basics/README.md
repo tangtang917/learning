@@ -1028,3 +1028,535 @@ while(it.hasNext()){
 
 
 
+### 第三章节 泛型
+
+使用泛型时，把泛型参数`<T>`替换为需要的class类型，例如：`ArrayList<String>`，`ArrayList<Number>`等；
+
+可以省略编译器能自动推断出的类型，例如：`List<String> list = new ArrayList<>();`；
+
+不指定泛型参数类型时，编译器会给出警告，且只能将`<T>`视为`Object`类型；
+
+
+
+### 第四章节 异常
+
+#### 4.1 捕获异常
+
+捕获异常时，多个`catch`语句的匹配顺序非常重要，子类必须放在前面；
+
+`finally`语句保证了有无异常都会执行，它是可选的；
+
+一个`catch`语句也可以匹配多个非继承关系的异常。
+
+
+
+因为处理`IOException`和`NumberFormatException`的代码是相同的，所以我们可以把它两用`|`合并到一起：
+
+```java
+public static void main(String[] args) {
+    try {
+        process1();
+        process2();
+        process3();
+    } catch (IOException | NumberFormatException e) {
+        // IOException或NumberFormatException
+        System.out.println("Bad input");
+    } catch (Exception e) {
+        System.out.println("Unknown error");
+    }
+}
+```
+
+
+
+#### 4.2 抛出异常
+
+调用`printStackTrace()`可以打印异常的传播栈，对于调试非常有用；
+
+捕获异常并再次抛出新的异常时，应该持有原始异常信息；
+
+通常不要在`finally`中抛出异常。如果在`finally`中抛出异常，应该原始异常加入到原有异常中。调用方可通过`Throwable.getSuppressed()`获取所有添加的`Suppressed Exception`。
+
+
+
+```java
+public class a02_yichang2 {
+    public static void main(String[] args) {
+        try {
+            process1();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void process1() {
+        process2();
+    }
+
+    static void process2() {
+        Integer.parseInt(null); // 会抛出NumberFormatException
+    }
+}
+```
+
+`printStackTrace()`对于调试错误非常有用，上述信息表示：`NumberFormatException`是在`java.lang.Integer.parseInt`方法中被抛出的，从下往上看，调用层次依次是：
+
+1. `main()`调用`process1()`；
+2. `process1()`调用`process2()`；
+3. `process2()`调用`Integer.parseInt(String)`；
+4. `Integer.parseInt(String)`调用`Integer.parseInt(String, int)`。
+
+
+
+如何抛出异常？参考`Integer.parseInt()`方法，抛出异常分两步：
+
+1. 创建某个`Exception`的实例；
+2. 用`throw`语句抛出。
+
+实际上，绝大部分抛出异常的代码都会合并写成一行：
+
+```java
+void process2(String s) {
+    if (s==null) {
+        throw new NullPointerException();
+    }
+}
+```
+
+
+
+如果一个方法捕获了某个异常后，又在`catch`子句中抛出新的异常，就相当于把抛出的异常类型“转换”了：
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        try {
+            process1();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void process1() {
+        try {
+            process2();
+        } catch (NullPointerException e) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    static void process2() {
+        throw new NullPointerException();
+    }
+}
+```
+
+当`process2()`抛出`NullPointerException`后，被`process1()`捕获，然后抛出`IllegalArgumentException()`。
+
+打印出的异常栈类似：
+
+```java
+java.lang.IllegalArgumentException
+    at Main.process1(Main.java:15)
+    at Main.main(Main.java:5)
+```
+
+这说明新的异常丢失了原始异常信息，我们已经看不到原始异常`NullPointerException`的信息了。
+
+为了能追踪到完整的异常栈，在构造异常的时候，把原始的`Exception`实例传进去，新的`Exception`就可以持有原始`Exception`信息。对上述代码改进如下：
+
+```java
+// exception
+public class Main {
+    public static void main(String[] args) {
+        try {
+            process1();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void process1() {
+        try {
+            process2();
+        } catch (NullPointerException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    static void process2() {
+        throw new NullPointerException();
+    }
+}
+```
+
+
+
+#### 4.3 自定义异常
+
+抛出异常时，尽量复用JDK已定义的异常类型；
+
+自定义异常体系时，推荐从`RuntimeException`派生“根异常”，再派生出业务异常；
+
+自定义异常时，应该提供多种构造方法。
+
+
+
+自定义的`BaseException`应该提供多个构造方法：
+
+```java
+public class BaseException extends RuntimeException {
+    public BaseException() {
+        super();
+    }
+
+    public BaseException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public BaseException(String message) {
+        super(message);
+    }
+
+    public BaseException(Throwable cause) {
+        super(cause);
+    }
+}
+```
+
+
+
+其他业务类型的异常就可以从`BaseException`派生：
+
+```java
+public class UserNotFoundException extends BaseException {
+}
+
+public class LoginFailedException extends BaseException {
+}
+```
+
+
+
+#### 4.4 NullPointerException
+
+`NullPointerException`是一种代码逻辑错误，遇到`NullPointerException`，遵循原则是早暴露，早修复，严禁使用`catch`来隐藏这种编码错误：
+
+
+
+好的编码习惯可以极大地降低`NullPointerException`的产生，例如：
+
+成员变量在定义时初始化：
+
+```java
+public class Person {
+    private String name = "";
+}
+```
+
+
+
+如果调用方一定要根据`null`判断，比如返回`null`表示文件不存在，那么考虑返回`Optional<T>`：
+
+```java
+public Optional<String> readFromFile(String file) {
+    if (!fileExist(file)) {
+        return Optional.empty();
+    }
+    ...
+}
+```
+
+这样调用方必须通过`Optional.isPresent()`判断是否有结果。
+
+
+
+### 第五章节 反射
+
+#### 5.1 class
+
+JVM为每个加载的`class`及`interface`创建了对应的`Class`实例来保存`class`及`interface`的所有信息；
+
+获取一个`class`对应的`Class`实例后，就可以获取该`class`的所有信息；
+
+通过Class实例获取`class`信息的方法称为反射（Reflection）；
+
+JVM总是动态加载`class`，可以在运行期根据条件来控制加载class。
+
+
+
+JVM为每个加载的`class`创建了对应的`Class`实例，并在实例中保存了该`class`的所有信息，包括类名、包名、父类、实现的接口、所有方法、字段等，因此，如果获取了某个`Class`实例，我们就可以通过这个`Class`实例获取到该实例对应的`class`的所有信息。
+
+方法一：直接通过一个`class`的静态变量`class`获取：
+
+```java
+Class cls = String.class;
+```
+
+方法二：如果我们有一个实例变量，可以通过该实例变量提供的`getClass()`方法获取：
+
+```java
+String s = "Hello";
+Class cls = s.getClass();
+```
+
+方法三：如果知道一个`class`的完整类名，可以通过静态方法`Class.forName()`获取：
+
+```java
+Class cls = Class.forName("java.lang.String");
+```
+
+因为`Class`实例在JVM中是唯一的，所以，上述方法获取的`Class`实例是同一个实例。可以用`==`比较两个`Class`实例：
+
+```java
+Class cls1 = String.class;
+
+String s = "Hello";
+Class cls2 = s.getClass();
+
+boolean sameClass = cls1 == cls2; // true
+```
+
+
+
+**动态加载**
+
+JVM在执行Java程序的时候，并不是一次性把所有用到的class全部加载到内存，而是第一次需要用到class时才加载。例如：
+
+```java
+// Main.java
+public class Main {
+    public static void main(String[] args) {
+        if (args.length > 0) {
+            create(args[0]);
+        }
+    }
+
+    static void create(String name) {
+        Person p = new Person(name);
+    }
+}
+```
+
+
+
+当执行`Main.java`时，由于用到了`Main`，因此，JVM首先会把`Main.class`加载到内存。然而，并不会加载`Person.class`，除非程序执行到`create()`方法，JVM发现需要加载`Person`类时，才会首次加载`Person.class`。如果没有执行`create()`方法，那么`Person.class`根本就不会被加载。
+
+
+
+#### 5.2 访问字段
+
+Java的反射API提供的`Field`类封装了字段的所有信息：
+
+通过`Class`实例的方法可以获取`Field`实例：`getField()`，`getFields()`，`getDeclaredField()`，`getDeclaredFields()`；
+
+通过Field实例可以获取字段信息：`getName()`，`getType()`，`getModifiers()`；
+
+通过Field实例可以读取或设置某个对象的字段，如果存在访问限制，要首先调用`setAccessible(true)`来访问非`public`字段。
+
+通过反射读写字段是一种非常规方法，它会破坏对象的封装。
+
+
+
+**获取Field：**String.class.getDeclaredField
+
+一个`Field`对象包含了一个字段的所有信息：
+
+- `getName()`：返回字段名称，例如，`"name"`；
+- `getType()`：返回字段类型，也是一个`Class`实例，例如，`String.class`；
+- `getModifiers()`：返回字段的修饰符，它是一个`int`，不同的bit表示不同的含义。
+
+以`String`类的`value`字段为例，它的定义是：
+
+```java
+public final class String {
+    private final byte[] value;
+}
+```
+
+我们用反射获取该字段的信息，代码如下：
+
+```java
+Field f = String.class.getDeclaredField("value");
+f.getName(); // "value"
+f.getType(); // class [B 表示byte[]类型
+int m = f.getModifiers();
+Modifier.isFinal(m); // true
+Modifier.isPublic(m); // false
+Modifier.isProtected(m); // false
+Modifier.isPrivate(m); // true
+Modifier.isStatic(m); // false
+```
+
+
+
+**获取字段值**
+
+利用反射拿到字段的一个`Field`实例只是第一步，我们还可以拿到一个实例对应的该字段的值。
+
+例如，对于一个`Person`实例，我们可以先拿到`name`字段对应的`Field`，再获取这个实例的`name`字段的值：
+
+```java
+// reflection
+import java.lang.reflect.Field;
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+        Object p = new Person("Xiao Ming");
+        Class c = p.getClass();
+        Field f = c.getDeclaredField("name");
+        // f.setAccessible(true);
+        Object value = f.get(p);
+        System.out.println(value); // "Xiao Ming"
+    }
+}
+
+class Person {
+    private String name;
+
+    public Person(String name) {
+        this.name = name;
+    }
+}
+```
+
+上述代码先获取`Class`实例，再获取`Field`实例，然后，用`Field.get(Object)`获取指定实例的指定字段的值。
+
+
+
+因为`name`被定义为一个`private`字段，正常情况下，`Main`类无法访问`Person`类的`private`字段。要修复错误，可以将`private`改为`public`，或者，在调用`Object value = f.get(p);`前，先写一句：
+
+```java
+f.setAccessible(true);
+```
+
+调用`Field.setAccessible(true)`的意思是，别管这个字段是不是`public`，一律允许访问。
+
+
+
+**设置字段值**
+
+通过Field实例既然可以获取到指定实例的字段值，自然也可以设置字段的值。
+
+设置字段值是通过`Field.set(Object, Object)`实现的，其中第一个`Object`参数是指定的实例，第二个`Object`参数是待修改的值。示例代码如下：
+
+```java
+// reflection
+import java.lang.reflect.Field;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+        Person p = new Person("Xiao Ming");
+        System.out.println(p.getName()); // "Xiao Ming"
+        Class c = p.getClass();
+        Field f = c.getDeclaredField("name");
+        f.setAccessible(true);
+        f.set(p, "Xiao Hong");
+        System.out.println(p.getName()); // "Xiao Hong"
+    }
+}
+
+class Person {
+    private String name;
+
+    public Person(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+}
+```
+
+
+
+#### 5.3 调用方法
+
+`Class`类提供了以下几个方法来获取`Method`：
+
+- `Method getMethod(name, Class...)`：获取某个`public`的`Method`（包括父类）
+- `Method getDeclaredMethod(name, Class...)`：获取当前类的某个`Method`（不包括父类）
+- `Method[] getMethods()`：获取所有`public`的`Method`（包括父类）
+- `Method[] getDeclaredMethods()`：获取当前类的所有`Method`（不包括父类）
+
+```java
+// reflection
+public class Main {
+    public static void main(String[] args) throws Exception {
+        Class stdClass = Student.class;
+        // 获取public方法getScore，参数为String:
+        System.out.println(stdClass.getMethod("getScore", String.class));
+        // 获取继承的public方法getName，无参数:
+        System.out.println(stdClass.getMethod("getName"));
+        // 获取private方法getGrade，参数为int:
+        System.out.println(stdClass.getDeclaredMethod("getGrade", int.class));
+    }
+}
+
+class Student extends Person {
+    public int getScore(String type) {
+        return 99;
+    }
+    private int getGrade(int year) {
+        return 1;
+    }
+}
+
+class Person {
+    public String getName() {
+        return "Person";
+    }
+}
+```
+
+上述代码首先获取`Student`的`Class`实例，然后，分别获取`public`方法、继承的`public`方法以及`private`方法，打印出的`Method`类似：
+
+```plain
+public int Student.getScore(java.lang.String)
+public java.lang.String Person.getName()
+private int Student.getGrade(int)
+```
+
+一个`Method`对象包含一个方法的所有信息：
+
+- `getName()`：返回方法名称，例如：`"getScore"`；
+- `getReturnType()`：返回方法返回值类型，也是一个Class实例，例如：`String.class`；
+- `getParameterTypes()`：返回方法的参数类型，是一个Class数组，例如：`{String.class, int.class}`；
+- `getModifiers()`：返回方法的修饰符，它是一个`int`，不同的bit表示不同的含义。
+
+
+
+**调用方法**
+
+当我们获取到一个`Method`对象时，就可以对它进行调用。我们以下面的代码为例(正常调用)：
+
+```java
+String s = "Hello world";
+String r = s.substring(6); // "world"
+```
+
+如果用反射来调用`substring`方法，需要以下代码：
+
+```java
+// reflection
+import java.lang.reflect.Method;
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+        // String对象:
+        String s = "Hello world";
+        // 获取String substring(int)方法，参数为int:
+        Method m = String.class.getMethod("substring", int.class);
+        // 在s对象上调用该方法并获取结果:
+        String r = (String) m.invoke(s, 6);
+        // 打印调用结果:
+        System.out.println(r); // "world"
+    }
+}
+```
+
+注意到`substring()`有两个重载方法，我们获取的是`String substring(int)`这个方法。思考一下如何获取`String substring(int, int)`方法。
+
+对`Method`实例调用`invoke`就相当于调用该方法，`invoke`的第一个参数是对象实例，即在哪个实例上调用该方法，后面的可变参数要与方法参数一致，否则将报错。
