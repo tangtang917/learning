@@ -1726,6 +1726,20 @@ Java标准库的`java.io.File`对象表示一个文件或者目录：
 
 
 
+构造File对象时，既可以传入绝对路径，也可以传入相对路径。绝对路径是以根目录开头的完整路径，例如：
+
+```java
+File f = new File("C:\\Windows\\notepad.exe");
+```
+
+注意Windows平台使用`\`作为路径分隔符，在Java字符串中需要用`\\`表示一个`\`。Linux平台使用`/`作为路径分隔符：
+
+```java
+File f = new File("/usr/bin/javac");
+```
+
+`File`对象既可以表示文件，也可以表示目录
+
 #### 6.2 InputStream
 
 Java标准库的`java.io.InputStream`定义了所有输入流的超类：
@@ -1734,6 +1748,525 @@ Java标准库的`java.io.InputStream`定义了所有输入流的超类：
 - `ByteArrayInputStream`在内存中模拟一个字节流输入。
 
 总是使用`try(resource)`来保证`InputStream`正确关闭。
+
+
+
+`InputStream`并不是一个接口，而是一个抽象类，它是所有输入流的超类。这个抽象类定义的一个最重要的方法就是`int read()`，签名如下：
+
+```java
+public abstract int read() throws IOException;
+```
+
+这个方法会读取输入流的下一个字节，并返回字节表示的`int`值（0~255）。如果已读到末尾，返回`-1`表示不能继续读取了。
+
+
+
+`FileInputStream`是`InputStream`的一个子类。顾名思义，`FileInputStream`就是从文件流中读取数据。
+
+```java
+public void readFile() throws IOException {
+    // 创建一个FileInputStream对象:
+    InputStream input = new FileInputStream("src/readme.txt");
+    for (;;) {
+        int n = input.read(); // 反复调用read()方法，直到返回-1
+        if (n == -1) {
+            break;
+        }
+        System.out.println(n); // 打印byte的值
+    }
+    input.close(); // 关闭流
+}
+```
+
+
+
+`InputStream`和`OutputStream`都是通过`close()`方法来关闭流。
+
+我们需要用`try ... finally`来保证`InputStream`在无论是否发生IO错误的时候都能够正确地关闭：
+
+```java
+public void readFile() throws IOException {
+    InputStream input = null;
+    try {
+        input = new FileInputStream("src/readme.txt");
+        int n;
+        while ((n = input.read()) != -1) { // 利用while同时读取并判断
+            System.out.println(n);
+        }
+    } finally {
+        if (input != null) { input.close(); }
+    }
+}
+```
+
+
+
+**缓冲**
+
+在读取流的时候，一次读取一个字节并不是最高效的方法。很多流支持一次性读取多个字节到缓冲区，对于文件和网络流来说，利用缓冲区一次性读取多个字节效率往往要高很多。
+
+- `int read(byte[] b)`：读取若干字节并填充到`byte[]`数组，返回读取的字节数
+- `int read(byte[] b, int off, int len)`：指定`byte[]`数组的偏移量和最大填充数
+
+利用上述方法一次读取多个字节时，需要先定义一个`byte[]`数组作为缓冲区，`read()`方法会尽可能多地读取字节到缓冲区， 但不会超过缓冲区的大小。`read()`方法的返回值不再是字节的`int`值，而是返回实际读取了多少个字节。如果返回`-1`，表示没有更多的数据了。
+
+利用缓冲区一次读取多个字节的代码如下：
+
+```java
+public class a01_input2 {
+    public static void main(String[] args) throws IOException {
+        FileInputStream input = null;
+        try {
+            input = new FileInputStream("D:\\codex-copy.log");
+            // 定义1000个字节大小的缓冲区:
+            byte[] bytes = new byte[1000];
+            int n;
+            while((n = input.read(bytes)) != -1){ // 读取到缓冲区
+                System.out.println("read " + n + " bytes");
+            }
+        } finally {
+            input.close();
+        }
+    }
+}
+输出结果如下：
+read 1000 bytes
+read 1000 bytes
+read 1000 bytes
+read 1000 bytes
+read 1000 bytes
+read 1000 bytes
+read 746 bytes
+```
+
+
+
+`ByteArrayInputStream`可以在内存中模拟一个`InputStream`：实际应用不多，但测试的时候，可以用它来构造一个`InputStream`，可以避免需要创建一个真实的文件
+
+
+
+#### 6.3 OutputStream
+
+和`InputStream`类似，`OutputStream`也是抽象类，它是所有输出流的超类。这个抽象类定义的一个最重要的方法就是`void write(int b)`，签名如下：
+
+```java
+public abstract void write(int b) throws IOException;
+```
+
+这个方法会写入一个字节到输出流。要注意的是，虽然传入的是`int`参数，但只会写入一个字节，即只写入`int`最低8位表示字节的部分（相当于`b & 0xff`）
+
+
+
+**flush()方法**
+
+和`InputStream`类似，`OutputStream`也提供了`close()`方法关闭输出流，以便释放系统资源。要特别注意：`OutputStream`还提供了一个`flush()`方法，它的目的是将缓冲区的内容真正输出到目的地。
+
+为什么要有`flush()`？因为向磁盘、网络写入数据的时候，出于效率的考虑，操作系统并不是输出一个字节就立刻写入到文件或者发送到网络，而是把输出的字节先放到内存的一个缓冲区里（本质上就是一个`byte[]`数组），等到缓冲区写满了，再一次性写入文件或者网络。对于很多IO设备来说，一次写一个字节和一次写1000个字节，花费的时间几乎是完全一样的，所以`OutputStream`有个`flush()`方法，能强制把缓冲区内容输出。
+
+通常情况下，我们不需要调用这个`flush()`方法，因为缓冲区写满了`OutputStream`会自动调用它，并且，在调用`close()`方法关闭`OutputStream`之前，也会自动调用`flush()`方法。
+
+但是，在某些情况下，我们必须手动调用`flush()`方法。举个栗子：
+
+小明正在开发一款在线聊天软件，当用户输入一句话后，就通过`OutputStream`的`write()`方法写入网络流。小明测试的时候发现，发送方输入后，接收方根本收不到任何信息，怎么回事？
+
+原因就在于写入网络流是先写入内存缓冲区，等缓冲区满了才会一次性发送到网络。如果缓冲区大小是4K，则发送方要敲几千个字符后，操作系统才会把缓冲区的内容发送出去，这个时候，接收方会一次性收到大量消息。
+
+解决办法就是每输入一句话后，立刻调用`flush()`，不管当前缓冲区是否已满，强迫操作系统把缓冲区的内容立刻发送出去。
+
+
+
+**FileOutputStream**
+
+```java
+public class a04_output {
+    public static void main(String[] args) throws IOException {
+        // 将若干个字节写入文件流
+        File file = new File("D:\\readme.txt");
+        /*FileOutputStream output = new FileOutputStream(file);
+        output.write(72);
+        output.write(101);
+        output.write(108);
+        output.write(108);
+        output.write(111);
+        output.close();*/
+
+        // 每次写入一个字节非常麻烦，更常见的方法是一次性写入若干字节。这时，可以用OutputStream提供的重载方法void write(byte[])来实现：
+        FileOutputStream output = null;
+        try {
+            output =  new FileOutputStream(file);
+            FileInputStream fileInputStream = new FileInputStream(file);
+            output.write("Hello World".getBytes("UTF-8"));
+        } finally {
+            output.close();
+        }
+    }
+}
+```
+
+
+
+和`InputStream`一样，`OutputStream`的`write()`方法也是阻塞的。
+
+同样的，`ByteArrayOutputStream`实际上是把一个`byte[]`数组在内存中变成一个`OutputStream`，虽然实际应用不多，但测试的时候，可以用它来构造一个`OutputStream`。
+
+
+
+同时操作多个`AutoCloseable`资源时，在`try(resource) { ... }`语句中可以同时写出多个资源，用`;`隔开。例如，同时读写两个文件：
+
+```java
+// 读取input.txt，写入output.txt:
+try (InputStream input = new FileInputStream("input.txt");
+     OutputStream output = new FileOutputStream("output.txt"))
+{
+    input.transferTo(output); // transferTo的作用是?
+}
+```
+
+`transferTo` 方法主要用于**高效地将数据从一个数据源传输（复制）到另一个目的地**
+
+
+
+
+
+#### 6.4 Filter模式
+
+Java的IO标准库使用Filter模式为`InputStream`和`OutputStream`增加功能：
+
+- 可以把一个`InputStream`和任意个`FilterInputStream`组合；
+- 可以把一个`OutputStream`和任意个`FilterOutputStream`组合。
+
+
+
+当我们需要给一个“基础”`InputStream`附加各种功能时，我们先确定这个能提供数据源的`InputStream`，因为我们需要的数据总得来自某个地方，例如，`FileInputStream`，数据来源自文件：
+
+```java
+InputStream file = new FileInputStream("test.gz");
+```
+
+紧接着，我们希望`FileInputStream`能提供缓冲的功能来提高读取的效率，因此我们用`BufferedInputStream`包装这个`InputStream`，得到的包装类型是`BufferedInputStream`，但它仍然被视为一个`InputStream`：
+
+```java
+InputStream buffered = new BufferedInputStream(file);
+```
+
+最后，假设该文件已经用gzip压缩了，我们希望直接读取解压缩的内容，就可以再包装一个`GZIPInputStream`：
+
+```java
+InputStream gzip = new GZIPInputStream(buffered);
+```
+
+无论我们包装多少次，得到的对象始终是`InputStream`，我们直接用`InputStream`来引用它，就可以正常读取：
+
+```
+┌─────────────────────────┐
+│GZIPInputStream          │
+│┌───────────────────────┐│
+││BufferedFileInputStream││
+││┌─────────────────────┐││
+│││   FileInputStream   │││
+││└─────────────────────┘││
+│└───────────────────────┘│
+└─────────────────────────┘
+```
+
+上述这种通过一个“基础”组件再叠加各种“附加”功能组件的模式，称之为Filter模式（或者装饰器模式：Decorator）。它可以让我们通过少量的类来实现各种功能的组合：
+
+```
+                 ┌─────────────┐
+                 │ InputStream │
+                 └─────────────┘
+                       ▲ ▲
+┌────────────────────┐ │ │ ┌─────────────────┐
+│  FileInputStream   │─┤ └─│FilterInputStream│
+└────────────────────┘ │   └─────────────────┘
+┌────────────────────┐ │     ▲ ┌───────────────────┐
+│ByteArrayInputStream│─┤     ├─│BufferedInputStream│
+└────────────────────┘ │     │ └───────────────────┘
+┌────────────────────┐ │     │ ┌───────────────────┐
+│ ServletInputStream │─┘     ├─│  DataInputStream  │
+└────────────────────┘       │ └───────────────────┘
+                             │ ┌───────────────────┐
+                             └─│CheckedInputStream │
+                               └───────────────────┘
+```
+
+类似的，`OutputStream`也是以这种模式来提供各种功能：
+
+```
+                  ┌─────────────┐
+                  │OutputStream │
+                  └─────────────┘
+                        ▲ ▲
+┌─────────────────────┐ │ │ ┌──────────────────┐
+│  FileOutputStream   │─┤ └─│FilterOutputStream│
+└─────────────────────┘ │   └──────────────────┘
+┌─────────────────────┐ │     ▲ ┌────────────────────┐
+│ByteArrayOutputStream│─┤     ├─│BufferedOutputStream│
+└─────────────────────┘ │     │ └────────────────────┘
+┌─────────────────────┐ │     │ ┌────────────────────┐
+│ ServletOutputStream │─┘     ├─│  DataOutputStream  │
+└─────────────────────┘       │ └────────────────────┘
+                              │ ┌────────────────────┐
+                              └─│CheckedOutputStream │
+                                └────────────────────┘
+```
+
+
+
+把 FilterInputStream 比作一个基础水管，通过 FileInputStream 获取的数据流就相当于其中的水流，其他的各种 BufferedInputStream、DigestInputStream 等就相当于在水管上套了一个又一个过滤网（它们都是继承于 FilterInputStream 的），可以通过这些特有的 ”网“ 来处理这股水流（添加缓冲区、统计摘要等等）
+
+
+
+自己编写`FilterInputStream`，以便可以把自己的`FilterInputStream`“叠加”到任何一个`InputStream`中。
+
+下面的例子演示了如何编写一个`CountInputStream`，它的作用是对输入的字节进行计数：
+
+```java
+public class a05_filter {
+    public static void main(String[] args) throws IOException {
+        byte[] data = "hello,world".getBytes("UTF-8");
+        CountINputStream input = null;
+        try {
+            input = new CountINputStream(new ByteArrayInputStream(data));
+            int n;
+            while ((n = input.read()) != -1) {
+                System.out.println((char)n);
+            }
+            System.out.println("Total read " + input.getBytesRead() + " bytes");
+        } finally {
+            input.close();
+        }
+    }
+}
+
+class CountINputStream extends FilterInputStream {
+
+    public int count = 0;
+
+    protected CountINputStream(InputStream in) {
+        super(in);
+    }
+
+    public int getBytesRead() {
+        return this.count;
+    }
+
+    @Override
+    public int read() throws IOException {
+        int n = in.read();
+        if (n != -1) {
+            this.count++;
+        }
+        return n;
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+        int n = in.read(b, off, len);
+        if (n != -1) {
+            this.count++;
+        }
+        return n;
+    }
+}
+```
+
+
+
+#### 6.5 读取zip文件
+
+`ZipInputStream`可以读取zip格式的流，`ZipOutputStream`可以把多份数据写入zip包；
+
+配合`FileInputStream`和`FileOutputStream`就可以读写zip文件。
+
+
+
+**读取zip包**
+
+我们来看看`ZipInputStream`的基本用法。
+
+我们要创建一个`ZipInputStream`，通常是传入一个`FileInputStream`作为数据源，然后，循环调用`getNextEntry()`，直到返回`null`，表示zip流结束。
+
+一个`ZipEntry`表示一个压缩文件或目录，如果是压缩文件，我们就用`read()`方法不断读取，直到返回`-1`：
+
+```java
+try (ZipInputStream zip = new ZipInputStream(new FileInputStream(...))) {
+    ZipEntry entry = null;
+    while ((entry = zip.getNextEntry()) != null) {
+        String name = entry.getName();
+        if (!entry.isDirectory()) {
+            int n;
+            while ((n = zip.read()) != -1) {
+                ...
+            }
+        }
+    }
+}
+```
+
+**写入zip包**
+
+`ZipOutputStream`是一种`FilterOutputStream`，它可以直接写入内容到zip包。我们要先创建一个`ZipOutputStream`，通常是包装一个`FileOutputStream`，然后，每写入一个文件前，先调用`putNextEntry()`，然后用`write()`写入`byte[]`数据，写入完毕后调用`closeEntry()`结束这个文件的打包。
+
+```java
+try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(...))) {
+    File[] files = ...
+    for (File file : files) {
+        zip.putNextEntry(new ZipEntry(file.getName()));
+        zip.write(Files.readAllBytes(file.toPath()));
+        zip.closeEntry();
+    }
+}
+```
+
+上面的代码没有考虑文件的目录结构。如果要实现目录层次结构，`new ZipEntry(name)`传入的`name`要用相对路径。
+
+
+
+
+
+#### 6.6 序列化
+
+可序列化的Java对象必须实现`java.io.Serializable`接口，类似`Serializable`这样的空接口被称为“标记接口”（Marker Interface）；
+
+反序列化时不调用构造方法，可设置`serialVersionUID`作为版本号（非必需）；
+
+Java的序列化机制仅适用于Java，如果需要与其它语言交换数据，必须使用通用的序列化方法，例如JSON。
+
+
+
+为什么要把Java对象序列化呢？因为序列化后可以把`byte[]`保存到文件中，或者把`byte[]`通过网络传输到远程，这样，就相当于把Java对象存储到文件或者通过网络传输出去了。
+
+有序列化，就有反序列化，即把一个二进制内容（也就是`byte[]`数组）变回Java对象。有了反序列化，保存到文件中的`byte[]`数组又可以“变回”Java对象，或者从网络上读取`byte[]`并把它“变回”Java对象。
+
+
+
+#### 6.7 Reader
+
+`Reader`是Java的IO库提供的另一个输入流接口。和`InputStream`的区别是，`InputStream`是一个字节流，即以`byte`为单位读取，而`Reader`是一个字符流，即以`char`为单位读取：
+
+| InputStream                         | Reader                                |
+| ----------------------------------- | ------------------------------------- |
+| 字节流，以`byte`为单位              | 字符流，以`char`为单位                |
+| 读取字节（-1，0~255）：`int read()` | 读取字符（-1，0~65535）：`int read()` |
+| 读到字节数组：`int read(byte[] b)`  | 读到字符数组：`int read(char[] c)`    |
+
+
+
+**FileReader**
+
+`FileReader`是`Reader`的一个子类，它可以打开文件并获取`Reader`。下面的代码演示了如何完整地读取一个`FileReader`的所有字符：
+
+```java
+public void readFile() throws IOException {
+    // 创建一个FileReader对象:
+    Reader reader = new FileReader("src/readme.txt", StandardCharsets.UTF_8); // 字符编码是???
+    for (;;) {
+        int n = reader.read(); // 反复调用read()方法，直到返回-1
+        if (n == -1) {
+            break;
+        }
+        System.out.println((char)n); // 打印char
+    }
+    reader.close(); // 关闭流
+}
+```
+
+
+
+**缓冲**
+
+`Reader`还提供了一次性读取若干字符并填充到`char[]`数组的方法：
+
+```java
+public int read(char[] c) throws IOException
+```
+
+它返回实际读入的字符个数，最大不超过`char[]`数组的长度。返回`-1`表示流结束。
+
+利用这个方法，我们可以先设置一个缓冲区，然后，每次尽可能地填充缓冲区：
+
+```java
+public void readFile() throws IOException {
+    try (Reader reader = new FileReader("src/readme.txt", StandardCharsets.UTF_8)) {
+        char[] buffer = new char[1000];
+        int n;
+        while ((n = reader.read(buffer)) != -1) {
+            System.out.println("read " + n + " chars.");
+        }
+    }
+}
+```
+
+
+
+**CharArrayReader**
+
+`CharArrayReader`可以在内存中模拟一个`Reader`，它的作用实际上是把一个`char[]`数组变成一个`Reader`，这和`ByteArrayInputStream`非常类似：
+
+```java
+try (Reader reader = new CharArrayReader("Hello".toCharArray())) {
+}
+```
+
+**StringReader**
+
+`StringReader`可以直接把`String`作为数据源，它和`CharArrayReader`几乎一样：
+
+```java
+try (Reader reader = new StringReader("Hello")) {
+}
+```
+
+
+
+#### 6.8 Writer
+
+`Reader`是带编码转换器的`InputStream`，它把`byte`转换为`char`，而`Writer`就是带编码转换器的`OutputStream`，它把`char`转换为`byte`并输出。
+
+`Writer`和`OutputStream`的区别如下：
+
+| OutputStream                           | Writer                                   |
+| -------------------------------------- | ---------------------------------------- |
+| 字节流，以`byte`为单位                 | 字符流，以`char`为单位                   |
+| 写入字节（0~255）：`void write(int b)` | 写入字符（0~65535）：`void write(int c)` |
+| 写入字节数组：`void write(byte[] b)`   | 写入字符数组：`void write(char[] c)`     |
+| 无对应方法                             | 写入String：`void write(String s)`       |
+
+`Writer`是所有字符输出流的超类，它提供的方法主要有：
+
+- 写入一个字符（0~65535）：`void write(int c)`；
+- 写入字符数组的所有字符：`void write(char[] c)`；
+- 写入String表示的所有字符：`void write(String s)`。
+
+**FileWriter**
+
+`FileWriter`就是向文件中写入字符流的`Writer`。它的使用方法和`FileReader`类似：
+
+```java
+try (Writer writer = new FileWriter("readme.txt", StandardCharsets.UTF_8)) {
+    writer.write('H'); // 写入单个字符
+    writer.write("Hello".toCharArray()); // 写入char[]
+    writer.write("Hello"); // 写入String
+}
+```
+
+**CharArrayWriter**
+
+`CharArrayWriter`可以在内存中创建一个`Writer`，它的作用实际上是构造一个缓冲区，可以写入`char`，最后得到写入的`char[]`数组，这和`ByteArrayOutputStream`非常类似：
+
+```java
+try (CharArrayWriter writer = new CharArrayWriter()) {
+    writer.write(65);
+    writer.write(66);
+    writer.write(67);
+    char[] data = writer.toCharArray(); // { 'A', 'B', 'C' }
+}
+```
+
+**StringWriter**
+
+`StringWriter`也是一个基于内存的`Writer`，它和`CharArrayWriter`类似。实际上，`StringWriter`在内部维护了一个`StringBuffer`，并对外提供了`Writer`接口。
 
 
 

@@ -4,7 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-public class a01_input2 {
+public class a03_input2 {
     public static void main(String[] args) throws IOException {
         FileInputStream input = null;
         try {
@@ -12,7 +12,7 @@ public class a01_input2 {
             byte[] bytes = new byte[1000];
             int n;
             while((n = input.read(bytes)) != -1){
-                System.out.println("read" + n + " bytes");
+                System.out.println("read " + n + " bytes");
             }
         } finally {
             input.close();
