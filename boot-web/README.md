@@ -22,13 +22,23 @@
 
 ## 学习资源
 - [内部资源清单](../docs/resources/spring.md)
-- [Spring Boot 中文文档入口](https://spring-boot.spring-doc.cn/)
-- [构建 RESTful Web 服务](https://springframework.org.cn/guides/gs/rest-service/)
+- 主线讲解：由当前学习仓库按课推进，每一课直接落代码和测试。
+- 辅助教程：[程序员优雅哥：SpringBoot 2.7.2 实战基础分类](https://www.cnblogs.com/youyacoder/category/2197925.html)
+- 第 1 课参考：[优雅哥：快速体验 Spring Boot 了解使用、运行和打包](https://www.cnblogs.com/youyacoder/p/16544627.html)
+- 第 1 课参考：[Spring Boot REST API 最佳实践 第一章：实现 GET Collection API](https://springdoc.cn/spring-boot-rest-api-best-practices-part-1/)
+- 第 2 课参考：[优雅哥：SpringBoot 如何集成 MyBatisPlus](https://www.cnblogs.com/youyacoder/p/16550998.html)
+- 第 2 课参考：[Spring Boot REST API 最佳实践 第二章：实现 Create 和 Update API](https://springdoc.cn/spring-boot-rest-api-best-practices-part-2/)
+- 速查资料：[Spring Boot 中文文档入口](https://spring-boot.spring-doc.cn/)
 
 ## 练习任务
+- [x] 写一个最小 REST API，并用测试证明接口可用
 - [ ] 写一个最小用户或商品 CRUD 接口
 - [ ] 补参数校验与全局异常处理
 - [ ] 用测试覆盖一个正常流程和一个异常流程
+
+## 课程记录
+- 第 1 课：Spring Boot Web 请求链路。当前接口为 `GET /api/hello?name=Codex`，返回 `{"message":"Hello, Codex"}`。
+- 第 2 课：DTO / VO / Service 分层。当前接口为 `POST /api/products`，请求体使用 `CreateProductRequest`，业务逻辑进入 `ProductService`，响应使用 `ProductResponse`。
 
 ## 笔记区
 - 接口设计经验：
